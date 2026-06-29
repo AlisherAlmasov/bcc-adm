@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank CenterCredit — Панель управления</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#16a34a;--green-light:#22c55e;--green-dark:#15803d;
+  --green-bg:#f0fdf4;--green-bg2:#dcfce7;
+  --dark:#111827;--dark2:#1f2937;--dark3:#374151;
+  --gray:#6b7280;--gray-light:#9ca3af;
+  --bg:#f1f5f9;--card-bg:#ffffff;--border:#e5e7eb;
+  --sidebar-bg:#111827;--sidebar-text:rgba(255,255,255,.65);
+  --sidebar-w:240px;--header-h:64px;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 20px rgba(0,0,0,.08);
+  --tr:.2s ease;
+}
+body.dark{
+  --dark:#f1f5f9;--dark2:#e2e8f0;--dark3:#cbd5e1;
+  --gray:#94a3b8;--gray-light:#64748b;
+  --bg:#0f172a;--card-bg:#1e293b;--border:#334155;
+  --sidebar-bg:#020617;--sidebar-text:rgba(255,255,255,.55);
+  --green-bg:#052e16;--green-bg2:#14532d;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--dark);overflow:hidden;height:100vh;transition:background var(--tr),color var(--tr)}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);height:100vh;
+  background:var(--sidebar-bg);display:flex;flex-direction:column;
+  transition:var(--tr);z-index:200;flex-shrink:0;
+}
+.sidebar-logo{
+  padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;gap:10px;
+}
+.logo-mark{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,#22c55e,#15803d);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;color:white;flex-shrink:0;letter-spacing:-.5px;
+}
+.logo-name{font-size:13px;font-weight:700;color:white;line-height:1.2}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.35);font-weight:400;margin-top:1px}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:8px 10px 0}
+.sidebar-scroll::-webkit-scrollbar{width:0}
+.nav-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.28);padding:14px 8px 5px;letter-spacing:.1em;text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;
+  border-radius:8px;cursor:pointer;margin-bottom:1px;
+  font-size:13px;font-weight:500;color:var(--sidebar-text);
+  transition:var(--tr);user-select:none;position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+.nav-item.active{background:var(--green);color:white}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.8}
+.nav-item.active svg{opacity:1}
+.nav-badge{
+  margin-left:auto;background:rgba(239,68,68,.85);color:white;
+  font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;
+}
+.sidebar-foot{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
+.usr{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer}
+.usr:hover{background:rgba(255,255,255,.06)}
+.usr-av{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#22c55e,#059669);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:white;
+}
+.usr-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.9)}
+.usr-role{font-size:10px;color:rgba(255,255,255,.35)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── HEADER ── */
+.header{
+  height:var(--header-h);background:var(--card-bg);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:14px;flex-shrink:0;
+  transition:background var(--tr),border-color var(--tr);
+}
+.h-title{font-size:15px;font-weight:700;color:var(--dark);flex:1}
+.search{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:7px 12px;width:210px;transition:var(--tr);
+}
+.search:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+.search input{border:none;background:none;font-size:13px;color:var(--dark);outline:none;width:100%;font-family:inherit}
+.search input::placeholder{color:var(--gray-light)}
+.h-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{
+  width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:none;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--gray);transition:var(--tr);position:relative;
+}
+.icon-btn:hover{background:var(--bg);color:var(--dark)}
+.notif-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:#ef4444;border:2px solid var(--card-bg)}
+.h-avatar{
+  width:36px;height:36px;border-radius:50%;cursor:pointer;
+  background:linear-gradient(135deg,#22c55e,#059669);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;
+}
+.theme-btn{
+  border:1px solid var(--border);border-radius:8px;padding:5px 10px;
+  font-size:12px;font-weight:500;cursor:pointer;color:var(--gray);
+  background:none;font-family:inherit;transition:var(--tr);white-space:nowrap;
+}
+.theme-btn:hover{color:var(--dark);background:var(--bg)}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:24px;background:var(--bg);transition:background var(--tr)}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:3px}
+body.dark .content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
+
+/* ── PAGES ── */
+.page{display:none;animation:fadeUp .22s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.page-head{margin-bottom:22px}
+.page-title{font-size:20px;font-weight:700;color:var(--dark)}
+.page-sub{font-size:13px;color:var(--gray);margin-top:3px}
+
+/* ── CARDS ── */
+.card{
+  background:var(--card-bg);border-radius:var(--radius);
+  border:1px solid var(--border);padding:20px;
+  transition:background var(--tr),border-color var(--tr);
+}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-size:14px;font-weight:600;color:var(--dark)}
+.card-link{font-size:12px;color:var(--green);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:500}
+.card-link:hover{text-decoration:underline}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.stat{
+  background:var(--card-bg);border-radius:var(--radius);border:1px solid var(--border);
+  padding:18px 20px;cursor:default;transition:var(--tr),box-shadow var(--tr);
+  border-top:3px solid transparent;
+}
+.stat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.stat.g{border-top-color:var(--green)}
+.stat.b{border-top-color:#2563eb}
+.stat.p{border-top-color:#7c3aed}
+.stat.o{border-top-color:#ea580c}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.stat-lbl{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.05em}
+.stat-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.ico-g{background:var(--green-bg2);color:var(--green)}
+.ico-b{background:#dbeafe;color:#2563eb}
+.ico-p{background:#ede9fe;color:#7c3aed}
+.ico-o{background:#ffedd5;color:#ea580c}
+body.dark .ico-g{background:#052e16;color:#4ade80}
+body.dark .ico-b{background:#1e3a5f;color:#60a5fa}
+body.dark .ico-p{background:#3b0764;color:#c084fc}
+body.dark .ico-o{background:#431407;color:#fb923c}
+.stat-val{font-size:22px;font-weight:700;color:var(--dark);margin-bottom:5px}
+.stat-chg{font-size:12px;font-weight:500;color:var(--green)}
+.stat-chg.neg{color:#ef4444}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g-rev{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.mb16{margin-bottom:16px}
+.mb22{margin-bottom:22px}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  padding:9px 12px;text-align:left;font-size:11px;font-weight:600;
+  color:var(--gray-light);text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+tbody td{
+  padding:11px 12px;border-bottom:1px solid var(--border);
+  color:var(--dark2);vertical-align:middle;
+}
+tbody tr:last-child td{border:none}
+tbody tr:hover td{background:rgba(0,0,0,.02)}
+body.dark tbody tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ── TABLE CONTROLS ── */
+.tbl-ctrl{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.t-search{
+  flex:1;min-width:180px;display:flex;align-items:center;gap:8px;
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;
+}
+.t-search:focus-within{border-color:var(--green)}
+.t-search input{border:none;background:none;font-size:13px;color:var(--dark);outline:none;width:100%;font-family:inherit}
+.t-search input::placeholder{color:var(--gray-light)}
+.fsel{
+  border:1px solid var(--border);border-radius:8px;padding:7px 10px;
+  font-size:13px;color:var(--dark);background:var(--card-bg);font-family:inherit;
+  cursor:pointer;outline:none;transition:var(--tr);
+}
+.fsel:focus{border-color:var(--green)}
+body.dark .fsel{background:var(--card-bg);color:var(--dark)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.bg-g{background:#dcfce7;color:#15803d}
+.bg-r{background:#fee2e2;color:#dc2626}
+.bg-y{background:#fef9c3;color:#a16207}
+.bg-b{background:#dbeafe;color:#1d4ed8}
+.bg-gray{background:#f3f4f6;color:#4b5563}
+.bg-p{background:#ede9fe;color:#6d28d9}
+body.dark .bg-g{background:#052e16;color:#4ade80}
+body.dark .bg-r{background:#450a0a;color:#f87171}
+body.dark .bg-y{background:#422006;color:#fbbf24}
+body.dark .bg-b{background:#1e3a5f;color:#60a5fa}
+body.dark .bg-gray{background:#1e293b;color:#94a3b8}
+body.dark .bg-p{background:#3b0764;color:#c084fc}
+
+/* ── MINI LIST ── */
+.mini-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.mini-row:last-child{border:none;padding-bottom:0}
+.mini-lbl{font-size:12px;color:var(--gray);font-weight:500}
+.mini-val{font-size:14px;font-weight:600;color:var(--dark)}
+
+/* ── PROGRESS ── */
+.prog-wrap{margin-bottom:10px}
+.prog-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.prog-name{font-weight:500;color:var(--dark)}
+.prog-pct{font-weight:600}
+.prog{height:5px;background:var(--border);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .8s ease}
+
+/* ── ACTIVITY ── */
+.act-item{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)}
+.act-item:last-child{border:none}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.act-text{font-size:13px;color:var(--dark2);line-height:1.4}
+.act-time{font-size:11px;color:var(--gray-light);margin-top:2px}
+.act-sub{font-size:11px;color:var(--gray-light)}
+
+/* ── ALERT ITEMS ── */
+.alert-item{
+  display:flex;gap:12px;align-items:flex-start;padding:14px;
+  background:var(--bg);border-radius:8px;margin-bottom:8px;
+  border:1px solid var(--border);transition:var(--tr);
+}
+.alert-item:last-child{margin-bottom:0}
+.alert-item:hover{border-color:var(--green)}
+.alert-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.ai-warn{background:#fff7ed;color:#c2410c}
+.ai-danger{background:#fef2f2;color:#dc2626}
+.ai-info{background:#eff6ff;color:#2563eb}
+body.dark .ai-warn{background:#431407;color:#fb923c}
+body.dark .ai-danger{background:#450a0a;color:#f87171}
+body.dark .ai-info{background:#1e3a5f;color:#60a5fa}
+.alert-title{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:3px}
+.alert-desc{font-size:12px;color:var(--gray)}
+.alert-ts{font-size:11px;color:var(--gray-light);margin-top:4px}
+
+/* ── BANK CARD ── */
+.bank-card{
+  border-radius:16px;padding:22px;color:white;position:relative;
+  overflow:hidden;margin-bottom:12px;cursor:default;
+  transition:transform var(--tr),box-shadow var(--tr);
+}
+.bank-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.2)}
+.bc-green{background:linear-gradient(135deg,#15803d 0%,#166534 55%,#14532d 100%)}
+.bc-blue{background:linear-gradient(135deg,#1d4ed8 0%,#1e40af 55%,#1e3a8a 100%)}
+.bc-dark{background:linear-gradient(135deg,#1f2937 0%,#111827 55%,#030712 100%)}
+.bc-glow::before{content:'';position:absolute;top:-50px;right:-50px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07)}
+.bc-glow::after{content:'';position:absolute;bottom:-70px;right:20px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.04)}
+.bc-chip{width:32px;height:24px;background:rgba(255,255,255,.28);border-radius:4px;margin-bottom:20px;position:relative;z-index:1}
+.bc-num{font-size:15px;font-weight:400;letter-spacing:.16em;margin-bottom:18px;opacity:.9;position:relative;z-index:1}
+.bc-foot{display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1}
+.bc-holder-lbl{font-size:10px;opacity:.5;margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.bc-holder-name{font-size:13px;font-weight:600}
+.bc-exp-lbl{font-size:10px;opacity:.5;text-align:right;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.bc-exp-val{font-size:13px;font-weight:600;text-align:right}
+.bc-type{font-size:17px;font-weight:800;text-align:right;margin-top:2px;opacity:.85}
+
+/* ── SETTINGS ── */
+.set-section{margin-bottom:20px}
+.set-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.set-row:last-child{border:none}
+.set-lbl{font-size:13px;font-weight:500;color:var(--dark)}
+.set-desc{font-size:11px;color:var(--gray);margin-top:2px}
+.set-val{font-size:12px;color:var(--gray-light);text-align:right}
+.toggle{width:40px;height:22px;border-radius:99px;background:var(--border);position:relative;cursor:pointer;transition:var(--tr);border:none;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:var(--tr)}
+.toggle.on::after{left:21px}
+
+/* ── CHART CANVAS ── */
+.chart-box{position:relative}
+
+/* ── KPI ROW ── */
+.kpi-row{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.kpi{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;flex:1;min-width:100px}
+.kpi-lbl{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:4px}
+.kpi-val{font-size:16px;font-weight:700;color:var(--dark)}
+.kpi-chg{font-size:11px;color:var(--green);font-weight:500}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(2,1fr)}.g-rev{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-250px;top:0;bottom:0}
+  .sidebar.open{left:0;box-shadow:4px 0 20px rgba(0,0,0,.25)}
+  .mb-menu-btn{display:flex!important}
+  .search{width:160px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .g2,.g3{grid-template-columns:1fr}
+  .content{padding:16px}
+}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr}}
+.mb-menu-btn{display:none;background:none;border:none;cursor:pointer;color:var(--gray);padding:4px 6px;margin-right:4px}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--card-bg);border-radius:16px;border:1px solid var(--border);
+  padding:28px;width:100%;max-width:380px;
+  transform:translateY(12px) scale(.97);transition:transform .22s ease;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.modal-overlay.open .modal{transform:none}
+.modal-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--gray);margin-bottom:22px}
+.modal-av{
+  width:64px;height:64px;border-radius:50%;
+  background:linear-gradient(135deg,#22c55e,#059669);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;color:white;
+  margin:0 auto 20px;cursor:pointer;position:relative;
+  transition:filter .2s;
+}
+.modal-av:hover{filter:brightness(1.1)}
+.modal-av-badge{
+  position:absolute;bottom:0;right:0;width:22px;height:22px;
+  border-radius:50%;background:var(--green);border:2px solid var(--card-bg);
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+}
+.field-group{margin-bottom:16px}
+.field-label{font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.05em}
+.field-input{
+  width:100%;border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;font-size:14px;color:var(--dark);
+  background:var(--bg);font-family:inherit;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.field-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+body.dark .field-input{background:#0f172a;color:var(--dark)}
+.modal-actions{display:flex;gap:10px;margin-top:22px}
+.btn-primary{
+  flex:1;background:var(--green);color:white;border:none;
+  border-radius:8px;padding:10px;font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.15s;
+}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-secondary{
+  background:none;border:1px solid var(--border);border-radius:8px;
+  padding:10px 16px;font-size:14px;font-weight:500;color:var(--gray);
+  cursor:pointer;font-family:inherit;transition:.15s;
+}
+.btn-secondary:hover{background:var(--bg);color:var(--dark)}
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:2000;
+  background:#111827;color:white;padding:12px 18px;border-radius:10px;
+  font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;
+  transform:translateY(80px);opacity:0;transition:.3s ease;pointer-events:none;
+}
+body.dark .toast{background:#f1f5f9;color:#111827}
+.toast.show{transform:none;opacity:1}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">BCC</div>
+      <div>
+        <div class="logo-name">CenterCredit</div>
+        <div class="logo-sub">Панель управления</div>
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <div class="nav-label">Главное</div>
+      <div class="nav-item active" data-page="dashboard" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Дашборд
+      </div>
+      <div class="nav-item" data-page="clients" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Клиенты <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" data-page="transactions" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Транзакции
+      </div>
+      <div class="nav-item" data-page="cards" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Карты
+      </div>
+      <div class="nav-label">Аналитика</div>
+      <div class="nav-item" data-page="analytics" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Аналитика
+      </div>
+      <div class="nav-label">Безопасность</div>
+      <div class="nav-item" data-page="security" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Безопасность <span class="nav-badge">2</span>
+      </div>
+      <div class="nav-item" data-page="settings" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M5.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+        Настройки
+      </div>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="usr" onclick="openModal()" title="Редактировать профиль" style="cursor:pointer">
+        <div class="usr-av" id="sidebarAv">АК</div>
+        <div>
+          <div class="usr-name" id="sidebarName">Алия Каримова</div>
+          <div class="usr-role" id="sidebarRole">Главный администратор</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div class="main">
+    <header class="header">
+      <button class="mb-menu-btn" id="menuBtn" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="h-title" id="hTitle">Дашборд</span>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Поиск по системе...">
+      </div>
+      <div class="h-actions">
+        <button class="icon-btn" title="Уведомления">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+        </button>
+        <button class="icon-btn" title="Полноэкранный режим" onclick="toggleFull()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 Тёмная</button>
+        <div class="h-avatar" id="headerAv" onclick="openModal()" title="Редактировать профиль" style="cursor:pointer">АК</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ───── DASHBOARD ───── -->
+      <div class="page active" id="pg-dashboard">
+        <div class="page-head">
+          <div class="page-title">Дашборд</div>
+          <div class="page-sub" id="dashGreeting">Добро пожаловать, Алия — сегодня 30 июня 2026 года</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat g">
+            <div class="stat-top">
+              <span class="stat-lbl">Общий баланс банка</span>
+              <div class="stat-ico ico-g"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            </div>
+            <div class="stat-val">₸ 847.3 млрд</div>
+            <div class="stat-chg">↑ +12.4% с прошлого месяца</div>
+          </div>
+          <div class="stat b">
+            <div class="stat-top">
+              <span class="stat-lbl">Всего клиентов</span>
+              <div class="stat-ico ico-b"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            </div>
+            <div class="stat-val">2 847 391</div>
+            <div class="stat-chg">↑ +8 241 за месяц</div>
+          </div>
+          <div class="stat p">
+            <div class="stat-top">
+              <span class="stat-lbl">Транзакций за сутки</span>
+              <div class="stat-ico ico-p"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+            </div>
+            <div class="stat-val">143 827</div>
+            <div class="stat-chg">↑ +5.2% к вчерашнему</div>
+          </div>
+          <div class="stat o">
+            <div class="stat-top">
+              <span class="stat-lbl">Доход за месяц</span>
+              <div class="stat-ico ico-o"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            </div>
+            <div class="stat-val">₸ 14.7 млрд</div>
+            <div class="stat-chg">↑ +19.8% г/г</div>
+          </div>
+        </div>
+
+        <div class="g-rev mb22">
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-title">Динамика доходов — 12 месяцев</span>
+              <button class="card-link">Скачать отчёт →</button>
+            </div>
+            <div class="chart-box" style="height:220px"><canvas id="c-revenue"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Типы транзакций</span></div>
+            <div class="chart-box" style="height:160px;margin-bottom:14px"><canvas id="c-doughnut"></canvas></div>
+            <div>
+              <div class="mini-row"><span class="mini-lbl">💚 Переводы</span><span class="mini-val">48%</span></div>
+              <div class="mini-row"><span class="mini-lbl">🔵 Оплата</span><span class="mini-val">31%</span></div>
+              <div class="mini-row"><span class="mini-lbl">🟣 Снятие</span><span class="mini-val">21%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">Последние операции</span>
+            <button class="card-link" onclick="nav(document.querySelector('[data-page=transactions]'))">Все транзакции →</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Клиент</th><th>Тип</th><th>Сумма</th><th>Дата</th><th>Статус</th></tr></thead>
+              <tbody>
+                <tr><td style="font-family:monospace;color:var(--gray-light);font-size:12px">#TX-9841</td><td><strong>Ерлан Омаров</strong></td><td><span class="badge bg-b">Перевод</span></td><td style="font-weight:600;color:#16a34a">+₸ 150 000</td><td style="color:var(--gray-light);font-size:12px">29.06.2026 14:32</td><td><span class="badge bg-g">Успешно</span></td></tr>
+                <tr><td style="font-family:monospace;color:var(--gray-light);font-size:12px">#TX-9840</td><td><strong>Гүлнар Сейтова</strong></td><td><span class="badge bg-gray">Оплата</span></td><td style="font-weight:600;color:#ef4444">−₸ 45 000</td><td style="color:var(--gray-light);font-size:12px">29.06.2026 13:15</td><td><span class="badge bg-g">Успешно</span></td></tr>
+                <tr><td style="font-family:monospace;color:var(--gray-light);font-size:12px">#TX-9839</td><td><strong>Асхат Джаксыбеков</strong></td><td><span class="badge bg-gray">Снятие</span></td><td style="font-weight:600;color:#ef4444">−₸ 200 000</td><td style="color:var(--gray-light);font-size:12px">29.06.2026 12:40</td><td><span class="badge bg-y">В обработке</span></td></tr>
+                <tr><td style="font-family:monospace;color:var(--gray-light);font-size:12px">#TX-9838</td><td><strong>Дина Нурланова</strong></td><td><span class="badge bg-g">Пополнение</span></td><td style="font-weight:600;color:#16a34a">+₸ 500 000</td><td style="color:var(--gray-light);font-size:12px">29.06.2026 11:05</td><td><span class="badge bg-g">Успешно</span></td></tr>
+                <tr><td style="font-family:monospace;color:var(--gray-light);font-size:12px">#TX-9837</td><td><strong>Марат Тасов</strong></td><td><span class="badge bg-b">Перевод</span></td><td style="font-weight:600;color:#ef4444">−₸ 4 500 000</td><td style="color:var(--gray-light);font-size:12px">29.06.2026 03:47</td><td><span class="badge bg-r">Отклонено</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── CLIENTS ───── -->
+      <div class="page" id="pg-clients">
+        <div class="page-head">
+          <div class="page-title">Клиенты</div>
+          <div class="page-sub">Управление базой клиентов банка</div>
+        </div>
+        <div class="kpi-row mb16">
+          <div class="kpi"><div class="kpi-lbl">Всего</div><div class="kpi-val">2 847 391</div></div>
+          <div class="kpi"><div class="kpi-lbl">Активных</div><div class="kpi-val" style="color:var(--green)">2 631 044</div></div>
+          <div class="kpi"><div class="kpi-lbl">Заблокированных</div><div class="kpi-val" style="color:#ef4444">192 380</div></div>
+          <div class="kpi"><div class="kpi-lbl">Новых за месяц</div><div class="kpi-val">8 241</div><div class="kpi-chg">↑ +12%</div></div>
+        </div>
+        <div class="card">
+          <div class="tbl-ctrl">
+            <div class="t-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="clSearch" placeholder="Поиск по имени, ИИН, телефону..." oninput="filterClients()">
+            </div>
+            <select class="fsel" id="clStatus" onchange="filterClients()">
+              <option value="">Все статусы</option>
+              <option>Активен</option>
+              <option>Заблокирован</option>
+              <option>Ожидание</option>
+            </select>
+            <select class="fsel">
+              <option>Все типы</option>
+              <option>Физ. лицо</option>
+              <option>Юр. лицо</option>
+            </select>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Клиент</th><th>ИИН</th><th>Телефон</th><th>Тип</th><th>Баланс</th><th>Карт</th><th>Дата регистрации</th><th>Статус</th><th></th></tr></thead>
+              <tbody id="clBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── TRANSACTIONS ───── -->
+      <div class="page" id="pg-transactions">
+        <div class="page-head">
+          <div class="page-title">Транзакции</div>
+          <div class="page-sub">История всех операций по банку</div>
+        </div>
+        <div class="kpi-row mb16">
+          <div class="kpi"><div class="kpi-lbl">За сутки</div><div class="kpi-val">143 827</div><div class="kpi-chg">↑ +5.2%</div></div>
+          <div class="kpi"><div class="kpi-lbl">Сумма (сутки)</div><div class="kpi-val">₸ 5.5 трлн</div></div>
+          <div class="kpi"><div class="kpi-lbl">Успешных</div><div class="kpi-val" style="color:var(--green)">98.4%</div></div>
+          <div class="kpi"><div class="kpi-lbl">Заблокированных</div><div class="kpi-val" style="color:#ef4444">247</div></div>
+        </div>
+        <div class="card">
+          <div class="tbl-ctrl">
+            <div class="t-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input placeholder="Поиск по ID, клиенту, счёту...">
+            </div>
+            <select class="fsel"><option>Все типы</option><option>Перевод</option><option>Оплата</option><option>Снятие</option><option>Пополнение</option></select>
+            <select class="fsel"><option>Все статусы</option><option>Успешно</option><option>В обработке</option><option>Отклонено</option></select>
+            <select class="fsel"><option>За сутки</option><option>За неделю</option><option>За месяц</option><option>За квартал</option></select>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Отправитель</th><th>Получатель</th><th>Тип</th><th>Сумма</th><th>Комиссия</th><th>Дата</th><th>Статус</th></tr></thead>
+              <tbody id="txBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── CARDS ───── -->
+      <div class="page" id="pg-cards">
+        <div class="page-head">
+          <div class="page-title">Банковские карты</div>
+          <div class="page-sub">Управление картами клиентов</div>
+        </div>
+        <div class="g2 mb22">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Примеры активных карт</div>
+            <div class="bank-card bc-green bc-glow">
+              <div class="bc-chip"></div>
+              <div class="bc-num">•••• •••• •••• 4721</div>
+              <div class="bc-foot">
+                <div><div class="bc-holder-lbl">Держатель</div><div class="bc-holder-name">ERLAN OMAROV</div></div>
+                <div><div class="bc-exp-lbl">До</div><div class="bc-exp-val">09/28</div><div class="bc-type">VISA</div></div>
+              </div>
+            </div>
+            <div class="bank-card bc-blue bc-glow">
+              <div class="bc-chip"></div>
+              <div class="bc-num">•••• •••• •••• 8834</div>
+              <div class="bc-foot">
+                <div><div class="bc-holder-lbl">Держатель</div><div class="bc-holder-name">GULNAR SEITOVA</div></div>
+                <div><div class="bc-exp-lbl">До</div><div class="bc-exp-val">03/27</div><div class="bc-type">MC</div></div>
+              </div>
+            </div>
+            <div class="bank-card bc-dark bc-glow">
+              <div class="bc-chip"></div>
+              <div class="bc-num">•••• •••• •••• 2290</div>
+              <div class="bc-foot">
+                <div><div class="bc-holder-lbl">Держатель</div><div class="bc-holder-name">MARAT TASOV</div></div>
+                <div><div class="bc-exp-lbl">До</div><div class="bc-exp-val">09/27</div><div class="bc-type">UP</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card mb16">
+              <div class="card-title" style="margin-bottom:14px">Статистика карт</div>
+              <div class="mini-row"><span class="mini-lbl">Всего выпущено</span><span class="mini-val">3 841 220</span></div>
+              <div class="mini-row"><span class="mini-lbl">Активные</span><span class="mini-val" style="color:var(--green)">3 612 440</span></div>
+              <div class="mini-row"><span class="mini-lbl">Заблокированные</span><span class="mini-val" style="color:#ef4444">192 380</span></div>
+              <div class="mini-row"><span class="mini-lbl">Истёкшие</span><span class="mini-val" style="color:var(--gray-light)">36 400</span></div>
+            </div>
+            <div class="card">
+              <div class="card-title" style="margin-bottom:14px">По платёжным системам</div>
+              <div class="prog-wrap"><div class="prog-top"><span class="prog-name">VISA</span><span class="prog-pct" style="color:#1d4ed8">58%</span></div><div class="prog"><div class="prog-fill" style="width:58%;background:#1d4ed8"></div></div></div>
+              <div class="prog-wrap"><div class="prog-top"><span class="prog-name">Mastercard</span><span class="prog-pct" style="color:#eb001b">37%</span></div><div class="prog"><div class="prog-fill" style="width:37%;background:#eb001b"></div></div></div>
+              <div class="prog-wrap"><div class="prog-top"><span class="prog-name">UnionPay</span><span class="prog-pct" style="color:#ea580c">5%</span></div><div class="prog"><div class="prog-fill" style="width:5%;background:#ea580c"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Все карты</span><button class="card-link">Выпустить карту +</button></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Номер карты</th><th>Держатель</th><th>Тип</th><th>Система</th><th>Выпущена</th><th>Истекает</th><th>Лимит</th><th>Статус</th></tr></thead>
+              <tbody>
+                <tr><td style="font-family:monospace">•••• 4721</td><td><strong>Ерлан Омаров</strong></td><td>Дебетовая</td><td>VISA Gold</td><td style="color:var(--gray-light)">15.03.2022</td><td style="color:var(--gray-light)">09/2028</td><td>₸ 5 000 000</td><td><span class="badge bg-g">Активна</span></td></tr>
+                <tr><td style="font-family:monospace">•••• 8834</td><td><strong>Гүлнар Сейтова</strong></td><td>Кредитная</td><td>Mastercard</td><td style="color:var(--gray-light)">20.07.2023</td><td style="color:var(--gray-light)">03/2027</td><td>₸ 2 000 000</td><td><span class="badge bg-g">Активна</span></td></tr>
+                <tr><td style="font-family:monospace">•••• 1193</td><td><strong>Асхат Джаксыбеков</strong></td><td>Дебетовая</td><td>VISA Platinum</td><td style="color:var(--gray-light)">01.01.2021</td><td style="color:#ef4444">12/2025</td><td>₸ 10 000 000</td><td><span class="badge bg-r">Истекла</span></td></tr>
+                <tr><td style="font-family:monospace">•••• 5567</td><td><strong>Дина Нурланова</strong></td><td>Дебетовая</td><td>Mastercard World</td><td style="color:var(--gray-light)">10.05.2024</td><td style="color:var(--gray-light)">05/2028</td><td>₸ 3 000 000</td><td><span class="badge bg-y">Заблокирована</span></td></tr>
+                <tr><td style="font-family:monospace">•••• 2290</td><td><strong>Марат Тасов</strong></td><td>Кредитная</td><td>UnionPay</td><td style="color:var(--gray-light)">22.09.2023</td><td style="color:var(--gray-light)">09/2027</td><td>₸ 1 500 000</td><td><span class="badge bg-g">Активна</span></td></tr>
+                <tr><td style="font-family:monospace">•••• 3371</td><td><strong>Айгерим Байжанова</strong></td><td>Дебетовая</td><td>VISA Classic</td><td style="color:var(--gray-light)">05.08.2022</td><td style="color:var(--gray-light)">08/2026</td><td>₸ 1 000 000</td><td><span class="badge bg-g">Активна</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── ANALYTICS ───── -->
+      <div class="page" id="pg-analytics">
+        <div class="page-head">
+          <div class="page-title">Аналитика</div>
+          <div class="page-sub">Детальный анализ показателей банка</div>
+        </div>
+        <div class="g2 mb22">
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Транзакции по часам (сегодня)</span></div>
+            <div class="chart-box" style="height:200px"><canvas id="c-hourly"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Активность по дням недели</span></div>
+            <div class="chart-box" style="height:200px"><canvas id="c-weekly"></canvas></div>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:16px">Каналы обслуживания</div>
+            <div class="prog-wrap"><div class="prog-top"><span class="prog-name">Мобильное приложение</span><span class="prog-pct" style="color:var(--green)">64%</span></div><div class="prog"><div class="prog-fill" style="width:64%;background:var(--green)"></div></div></div>
+            <div class="prog-wrap"><div class="prog-top"><span class="prog-name">Интернет-банкинг</span><span class="prog-pct" style="color:#2563eb">22%</span></div><div class="prog"><div class="prog-fill" style="width:22%;background:#2563eb"></div></div></div>
+            <div class="prog-wrap"><div class="prog-top"><span class="prog-name">Банкомат (ATM)</span><span class="prog-pct" style="color:#7c3aed">9%</span></div><div class="prog"><div class="prog-fill" style="width:9%;background:#7c3aed"></div></div></div>
+            <div class="prog-wrap"><div class="prog-top"><span class="prog-name">Отделение банка</span><span class="prog-pct" style="color:var(--gray)">5%</span></div><div class="prog"><div class="prog-fill" style="width:5%;background:var(--gray)"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px">Ключевые показатели (KPI)</div>
+            <div class="mini-row"><span class="mini-lbl">Средняя сумма транзакции</span><span class="mini-val">₸ 38 420</span></div>
+            <div class="mini-row"><span class="mini-lbl">Одобрение кредитов</span><span class="mini-val" style="color:var(--green)">73.2%</span></div>
+            <div class="mini-row"><span class="mini-lbl">Churn rate клиентов</span><span class="mini-val" style="color:#ef4444">2.1%</span></div>
+            <div class="mini-row"><span class="mini-lbl">NPS банка</span><span class="mini-val" style="color:var(--green)">61</span></div>
+            <div class="mini-row"><span class="mini-lbl">Среднее время отклика API</span><span class="mini-val">1.2 с</span></div>
+            <div class="mini-row"><span class="mini-lbl">Uptime системы</span><span class="mini-val" style="color:var(--green)">99.97%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── SECURITY ───── -->
+      <div class="page" id="pg-security">
+        <div class="page-head">
+          <div class="page-title">Безопасность</div>
+          <div class="page-sub">Мониторинг, аудит и контроль доступа</div>
+        </div>
+        <div class="g2 mb22">
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Подозрительные операции</span><span class="badge bg-r">2 новых</span></div>
+            <div class="alert-item">
+              <div class="alert-ico ai-danger">⚠️</div>
+              <div>
+                <div class="alert-title">Нетипичная транзакция на крупную сумму</div>
+                <div class="alert-desc">Клиент Марат Тасов — перевод ₸ 4 500 000 на незнакомый счёт в 03:47</div>
+                <div class="alert-ts">29.06.2026, 03:47 — автоматически заблокирована системой AML</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-ico ai-danger">🔒</div>
+              <div>
+                <div class="alert-title">Множественные неверные ПИН-коды</div>
+                <div class="alert-desc">Карта •••• 5567 — 5 неверных попыток подряд</div>
+                <div class="alert-ts">29.06.2026, 08:22 — карта автоматически заморожена</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-ico ai-warn">🌍</div>
+              <div>
+                <div class="alert-title">Вход из нового географического региона</div>
+                <div class="alert-desc">Аккаунт admin@bcc.kz — IP: 185.220.101.42 (Германия, Франкфурт)</div>
+                <div class="alert-ts">28.06.2026, 22:10 — требует верификации 2FA</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Последние входы в систему</span></div>
+            <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div><div class="act-text">Алия Каримова — успешный вход<br><span class="act-sub">192.168.1.44 · Chrome 125 · Алматы, KZ</span></div><div class="act-time">Сегодня, 08:30</div></div></div>
+            <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div><div class="act-text">Данияр Жанов — успешный вход<br><span class="act-sub">10.0.0.8 · Firefox 127 · Астана, KZ</span></div><div class="act-time">Сегодня, 07:55</div></div></div>
+            <div class="act-item"><div class="act-dot" style="background:#ef4444"></div><div><div class="act-text">Неизвестный — неудачная попытка<br><span class="act-sub">185.220.101.42 · Tor Browser · Германия</span></div><div class="act-time">Вчера, 22:10</div></div></div>
+            <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div><div class="act-text">Сауле Берикова — успешный вход<br><span class="act-sub">10.0.0.15 · Safari 17 · Алматы, KZ</span></div><div class="act-time">Вчера, 18:40</div></div></div>
+            <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div><div class="act-text">Данияр Жанов — успешный вход<br><span class="act-sub">10.0.0.8 · Chrome 125 · Астана, KZ</span></div><div class="act-time">Вчера, 09:12</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Журнал действий администраторов</span><button class="card-link">Экспортировать →</button></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Дата / Время</th><th>Администратор</th><th>Действие</th><th>Объект</th><th>IP-адрес</th><th>Результат</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--gray-light);font-size:12px">29.06 09:12</td><td><strong>Алия Каримова</strong></td><td>Блокировка карты</td><td style="font-family:monospace">•••• 5567</td><td style="font-family:monospace;font-size:12px">192.168.1.44</td><td><span class="badge bg-g">Успешно</span></td></tr>
+                <tr><td style="color:var(--gray-light);font-size:12px">29.06 08:55</td><td><strong>Данияр Жанов</strong></td><td>Изменение кредитного лимита</td><td>Клиент #28471</td><td style="font-family:monospace;font-size:12px">10.0.0.8</td><td><span class="badge bg-g">Успешно</span></td></tr>
+                <tr><td style="color:var(--gray-light);font-size:12px">29.06 08:40</td><td><strong>Сауле Берикова</strong></td><td>Сброс пароля клиента</td><td>Клиент #19832</td><td style="font-family:monospace;font-size:12px">10.0.0.15</td><td><span class="badge bg-g">Успешно</span></td></tr>
+                <tr><td style="color:var(--gray-light);font-size:12px">29.06 08:22</td><td><em style="color:var(--gray)">Система AML</em></td><td>Автоматическая блокировка</td><td style="font-family:monospace">Карта •••• 5567</td><td style="color:var(--gray-light)">—</td><td><span class="badge bg-y">Авто</span></td></tr>
+                <tr><td style="color:var(--gray-light);font-size:12px">29.06 03:47</td><td><em style="color:var(--gray)">Система AML</em></td><td>Заморозка транзакции</td><td style="font-family:monospace">#TX-9837</td><td style="color:var(--gray-light)">—</td><td><span class="badge bg-r">Подозрение</span></td></tr>
+                <tr><td style="color:var(--gray-light);font-size:12px">28.06 18:10</td><td><strong>Алия Каримова</strong></td><td>Одобрение крупной транзакции</td><td style="font-family:monospace">#TX-9835</td><td style="font-family:monospace;font-size:12px">192.168.1.44</td><td><span class="badge bg-g">Успешно</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── SETTINGS ───── -->
+      <div class="page" id="pg-settings">
+        <div class="page-head">
+          <div class="page-title">Настройки</div>
+          <div class="page-sub">Конфигурация системы и параметры безопасности</div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="card set-section">
+              <div class="set-title">Безопасность</div>
+              <div class="set-row"><div><div class="set-lbl">Двухфакторная аутентификация</div><div class="set-desc">SMS и TOTP для всех администраторов</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">Блокировка подозрительных IP</div><div class="set-desc">Автоматически через 3 неудачные попытки</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">Полный аудит действий</div><div class="set-desc">Журнал всех операций администраторов</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">Расширенный ночной AML</div><div class="set-desc">Усиленная проверка с 23:00 до 06:00</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">Шифрование данных AES-256</div><div class="set-desc">Все данные зашифрованы в покое</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            </div>
+            <div class="card set-section">
+              <div class="set-title">Уведомления</div>
+              <div class="set-row"><div><div class="set-lbl">Email-уведомления</div><div class="set-desc">Критические события на admin@bcc.kz</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">SMS-оповещения</div><div class="set-desc">Для операций свыше ₸ 1 млн</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">Push-уведомления</div><div class="set-desc">В мобильное приложение</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+              <div class="set-row"><div><div class="set-lbl">Telegram-бот</div><div class="set-desc">Уведомления в корпоративный канал</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            </div>
+          </div>
+          <div>
+            <div class="card set-section">
+              <div class="set-title">Лимиты транзакций</div>
+              <div class="set-row"><div><div class="set-lbl">Суточный лимит перевода</div><div class="set-desc">Для физических лиц</div></div><span class="set-val" style="color:var(--green);font-weight:600">₸ 5 000 000</span></div>
+              <div class="set-row"><div><div class="set-lbl">Снятие в банкомате</div><div class="set-desc">Суточный лимит</div></div><span class="set-val" style="color:var(--green);font-weight:600">₸ 500 000</span></div>
+              <div class="set-row"><div><div class="set-lbl">Порог AML-проверки</div><div class="set-desc">Автоматическая заморозка операции</div></div><span class="set-val" style="color:#ea580c;font-weight:600">₸ 3 000 000</span></div>
+              <div class="set-row"><div><div class="set-lbl">Лимит для юр. лиц</div><div class="set-desc">Суточный перевод</div></div><span class="set-val" style="color:var(--green);font-weight:600">₸ 500 000 000</span></div>
+            </div>
+            <div class="card set-section">
+              <div class="set-title">Система</div>
+              <div class="set-row"><div><div class="set-lbl">Версия платформы</div></div><span class="set-val">BCC Admin v4.2.1</span></div>
+              <div class="set-row"><div><div class="set-lbl">Последнее резервирование</div><div class="set-desc">29.06.2026, 03:00 UTC+5</div></div><span class="badge bg-g">Актуально</span></div>
+              <div class="set-row"><div><div class="set-lbl">Часовой пояс</div><div class="set-desc">Алматы, Казахстан</div></div><span class="set-val">GMT+5</span></div>
+              <div class="set-row"><div><div class="set-lbl">Язык интерфейса</div></div>
+                <select class="fsel" style="padding:5px 8px;font-size:12px"><option>Русский</option><option>Қазақша</option><option>English</option></select>
+              </div>
+              <div class="set-row"><div><div class="set-lbl">Статус серверов</div></div><span class="badge bg-g">✓ Все работают</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════ PROFILE MODAL ══════════ -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">Редактировать профиль</div>
+    <div class="modal-sub">Изменения применятся сразу во всей панели</div>
+    <div class="modal-av" id="modalAv">
+      <span id="modalAvText">АК</span>
+      <div class="modal-av-badge">✏️</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="inputName">Полное имя</label>
+      <input class="field-input" id="inputName" type="text" placeholder="Введите имя и фамилию">
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="inputRole">Должность</label>
+      <input class="field-input" id="inputRole" type="text" placeholder="Например: Главный администратор">
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="inputEmail">Email</label>
+      <input class="field-input" id="inputEmail" type="email" placeholder="admin@bcc.kz">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+      <button class="btn-primary" onclick="saveProfile()">Сохранить изменения</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Профиль обновлён</div>
+
+<script>
+// ── DATA ──
+const CLIENTS = [
+  {name:'Ерлан Омаров',iin:'840612300147',phone:'+7 701 234 56 78',type:'Физ. лицо',balance:'₸ 2 847 300',cards:3,reg:'14.03.2018',status:'Активен'},
+  {name:'Гүлнар Сейтова',iin:'900415401283',phone:'+7 702 345 67 89',type:'Физ. лицо',balance:'₸ 450 000',cards:2,reg:'22.07.2020',status:'Активен'},
+  {name:'Асхат Джаксыбеков',iin:'751230500194',phone:'+7 777 456 78 90',type:'Юр. лицо',balance:'₸ 18 200 000',cards:5,reg:'05.01.2015',status:'Активен'},
+  {name:'Дина Нурланова',iin:'950820600211',phone:'+7 707 567 89 01',type:'Физ. лицо',balance:'₸ 0',cards:1,reg:'30.11.2022',status:'Заблокирован'},
+  {name:'Марат Тасов',iin:'880103200105',phone:'+7 747 678 90 12',type:'Физ. лицо',balance:'₸ 125 000',cards:2,reg:'18.06.2019',status:'Ожидание'},
+  {name:'Айгерим Байжанова',iin:'920714400229',phone:'+7 771 789 01 23',type:'Физ. лицо',balance:'₸ 980 500',cards:1,reg:'09.04.2021',status:'Активен'},
+  {name:'Бекжан Уразов',iin:'001204700088',phone:'+7 700 890 12 34',type:'Физ. лицо',balance:'₸ 3 400 000',cards:4,reg:'01.09.2023',status:'Активен'},
+  {name:'Зарина Мусина',iin:'870521300316',phone:'+7 778 901 23 45',type:'Юр. лицо',balance:'₸ 52 000 000',cards:8,reg:'11.02.2012',status:'Активен'},
+];
+
+const TX = [
+  {id:'#TX-9841',from:'Ерлан Омаров',to:'Гүлнар Сейтова',type:'Перевод',tc:'bg-b',amount:'+₸ 150 000',pos:true,fee:'₸ 150',date:'29.06.2026 14:32',status:'Успешно',sc:'bg-g'},
+  {id:'#TX-9840',from:'Гүлнар Сейтова',to:'KazMunaiGaz',type:'Оплата',tc:'bg-gray',amount:'-₸ 45 000',pos:false,fee:'₸ 0',date:'29.06.2026 13:15',status:'Успешно',sc:'bg-g'},
+  {id:'#TX-9839',from:'Асхат Джаксыбеков',to:'Нал (ATM)',type:'Снятие',tc:'bg-gray',amount:'-₸ 200 000',pos:false,fee:'₸ 0',date:'29.06.2026 12:40',status:'В обработке',sc:'bg-y'},
+  {id:'#TX-9838',from:'Каспийбанк',to:'Дина Нурланова',type:'Пополнение',tc:'bg-g',amount:'+₸ 500 000',pos:true,fee:'₸ 0',date:'29.06.2026 11:05',status:'Успешно',sc:'bg-g'},
+  {id:'#TX-9837',from:'Марат Тасов',to:'Unknown',type:'Перевод',tc:'bg-b',amount:'-₸ 4 500 000',pos:false,fee:'₸ 500',date:'29.06.2026 03:47',status:'Отклонено',sc:'bg-r'},
+  {id:'#TX-9836',from:'Айгерим Байжанова',to:'Kaspi Pay',type:'Оплата',tc:'bg-gray',amount:'-₸ 12 500',pos:false,fee:'₸ 0',date:'28.06.2026 22:30',status:'Успешно',sc:'bg-g'},
+  {id:'#TX-9835',from:'Бекжан Уразов',to:'BI Group LLC',type:'Перевод',tc:'bg-b',amount:'-₸ 8 000 000',pos:false,fee:'₸ 800',date:'28.06.2026 18:10',status:'Успешно',sc:'bg-g'},
+  {id:'#TX-9834',from:'Зарина Мусина',to:'Персонал (зарплата)',type:'Зарплата',tc:'bg-p',amount:'-₸ 15 200 000',pos:false,fee:'₸ 0',date:'28.06.2026 12:00',status:'Успешно',sc:'bg-g'},
+];
+
+// ── RENDER CLIENTS ──
+function renderClients(list){
+  const sb = {Активен:'bg-g', Заблокирован:'bg-r', Ожидание:'bg-y'};
+  document.getElementById('clBody').innerHTML = list.map(c=>`
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td style="font-family:monospace;font-size:12px;color:var(--gray-light)">${c.iin}</td>
+      <td style="color:var(--gray)">${c.phone}</td>
+      <td><span class="badge bg-gray">${c.type}</span></td>
+      <td style="font-weight:600">${c.balance}</td>
+      <td style="text-align:center"><span class="badge bg-b">${c.cards}</span></td>
+      <td style="color:var(--gray-light);font-size:12px">${c.reg}</td>
+      <td><span class="badge ${sb[c.status]}">${c.status}</span></td>
+      <td><button class="card-link" style="font-size:12px">Открыть →</button></td>
+    </tr>`).join('');
+}
+
+function filterClients(){
+  const q = document.getElementById('clSearch').value.toLowerCase();
+  const s = document.getElementById('clStatus').value;
+  renderClients(CLIENTS.filter(c=>{
+    const m = !q || c.name.toLowerCase().includes(q) || c.iin.includes(q) || c.phone.includes(q);
+    const ms = !s || c.status === s;
+    return m && ms;
+  }));
+}
+
+// ── RENDER TX ──
+function renderTx(){
+  document.getElementById('txBody').innerHTML = TX.map(t=>`
+    <tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--gray-light)">${t.id}</td>
+      <td><strong>${t.from}</strong></td>
+      <td style="color:var(--gray)">${t.to}</td>
+      <td><span class="badge ${t.tc}">${t.type}</span></td>
+      <td style="font-weight:700;color:${t.pos?'var(--green)':'#ef4444'}">${t.amount}</td>
+      <td style="color:var(--gray-light)">${t.fee}</td>
+      <td style="color:var(--gray-light);font-size:12px">${t.date}</td>
+      <td><span class="badge ${t.sc}">${t.status}</span></td>
+    </tr>`).join('');
+}
+
+renderClients(CLIENTS);
+renderTx();
+
+// ── NAVIGATION ──
+const PAGE_TITLES = {dashboard:'Дашборд',clients:'Клиенты',transactions:'Транзакции',cards:'Карты',analytics:'Аналитика',security:'Безопасность',settings:'Настройки'};
+
+function nav(el){
+  const pid = el.dataset.page;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pg-'+pid).classList.add('active');
+  document.getElementById('hTitle').textContent = PAGE_TITLES[pid]||pid;
+  if(pid==='analytics') setTimeout(initAnalyticsCharts, 60);
+  // close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// ── THEME ──
+let dark = false;
+const charts = {};
+
+function toggleTheme(){
+  dark = !dark;
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('themeBtn').textContent = dark ? '☀️ Светлая' : '🌙 Тёмная';
+  setTimeout(reinitAllCharts, 80);
+}
+
+function toggleFull(){
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+
+// ── CHARTS HELPERS ──
+function gc(){ // get chart colors
+  return {
+    grid: dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.05)',
+    tick: dark ? '#475569' : '#9ca3af',
+    tooltip: {
+      bg: dark?'#1e293b':'#ffffff',
+      title: dark?'#f1f5f9':'#111827',
+      body: dark?'#94a3b8':'#6b7280',
+      border: dark?'#334155':'#e5e7eb',
+    }
+  };
+}
+
+function tooltipOpts(C){
+  return {
+    backgroundColor:C.tooltip.bg,
+    titleColor:C.tooltip.title,
+    bodyColor:C.tooltip.body,
+    borderColor:C.tooltip.border,
+    borderWidth:1,
+    padding:10,
+    cornerRadius:8,
+  };
+}
+
+function destroyChart(key){
+  if(charts[key]){ try{charts[key].destroy()}catch(e){} delete charts[key]; }
+}
+
+function initDashCharts(){
+  const C = gc();
+  const months = ['Июл','Авг','Сен','Окт','Ноя','Дек','Янв','Фев','Мар','Апр','Май','Июн'];
+  const revenue = [8.2,9.1,8.8,10.4,11.2,10.9,12.3,13.1,12.8,13.9,14.1,14.7];
+
+  destroyChart('revenue');
+  const rc = document.getElementById('c-revenue');
+  if(rc) charts['revenue'] = new Chart(rc,{
+    type:'line',
+    data:{
+      labels:months,
+      datasets:[{
+        label:'Доход (млрд ₸)',data:revenue,
+        borderColor:'#22c55e',borderWidth:2.5,
+        pointBackgroundColor:'#22c55e',pointRadius:4,pointHoverRadius:7,
+        fill:true,
+        backgroundColor: dark ? 'rgba(34,197,94,.12)' : 'rgba(34,197,94,.08)',
+        tension:0.4,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{...tooltipOpts(C),callbacks:{label:ctx=>`₸ ${ctx.parsed.y.toFixed(1)} млрд`}}
+      },
+      scales:{
+        x:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:11}}},
+        y:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:11},callback:v=>`${v}млрд`}}
+      }
+    }
+  });
+
+  destroyChart('doughnut');
+  const dc = document.getElementById('c-doughnut');
+  if(dc) charts['doughnut'] = new Chart(dc,{
+    type:'doughnut',
+    data:{
+      labels:['Переводы','Оплата','Снятие'],
+      datasets:[{data:[48,31,21],backgroundColor:['#22c55e','#2a78d6','#7c3aed'],borderWidth:0,hoverOffset:8}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'72%',
+      plugins:{legend:{display:false},tooltip:{...tooltipOpts(C),callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}%`}}}
+    }
+  });
+}
+
+function initAnalyticsCharts(){
+  const C = gc();
+  const hours = Array.from({length:24},(_,i)=>i+':00');
+  const hdata = [120,80,45,30,20,25,180,420,850,1200,1400,1550,1480,1600,1420,1380,1290,1100,980,870,720,580,380,210];
+
+  destroyChart('hourly');
+  const hc = document.getElementById('c-hourly');
+  if(hc) charts['hourly'] = new Chart(hc,{
+    type:'bar',
+    data:{labels:hours,datasets:[{label:'Транзакции',data:hdata,backgroundColor:dark?'rgba(34,197,94,.2)':'rgba(34,197,94,.15)',borderColor:'#22c55e',borderWidth:1.5,borderRadius:3,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tooltipOpts(C)},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:10},maxTicksLimit:8,autoSkip:true}},y:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:10}}}}}
+  });
+
+  destroyChart('weekly');
+  const wc = document.getElementById('c-weekly');
+  if(wc) charts['weekly'] = new Chart(wc,{
+    type:'bar',
+    data:{
+      labels:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+      datasets:[
+        {label:'Активные',data:[142000,138000,151000,160000,155000,98000,72000],backgroundColor:'#22c55e',borderRadius:4,borderSkipped:false},
+        {label:'Новые',data:[8200,7100,9400,10100,8800,5200,3100],backgroundColor:'#2a78d6',borderRadius:4,borderSkipped:false},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tooltipOpts(C)},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick}},y:{grid:{color:C.grid},ticks:{color:C.tick}}}}
+  });
+}
+
+function reinitAllCharts(){
+  initDashCharts();
+  if(document.getElementById('pg-analytics').classList.contains('active')) initAnalyticsCharts();
+}
+
+// ── ADMIN PROFILE ──
+const admin = {
+  name: 'Алия Каримова',
+  role: 'Главный администратор',
+  email: 'admin@bcc.kz',
+};
+
+function initials(name){
+  return name.trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || '??';
+}
+
+function applyAdmin(){
+  const av = initials(admin.name);
+  const firstName = admin.name.split(' ')[0] || admin.name;
+
+  // Sidebar
+  document.getElementById('sidebarAv').textContent = av;
+  document.getElementById('sidebarName').textContent = admin.name;
+  document.getElementById('sidebarRole').textContent = admin.role;
+
+  // Header
+  document.getElementById('headerAv').textContent = av;
+  document.getElementById('headerAv').title = admin.name;
+
+  // Dashboard greeting
+  const today = new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('dashGreeting').textContent = `Добро пожаловать, ${firstName} — сегодня ${today}`;
+}
+
+function openModal(){
+  document.getElementById('inputName').value = admin.name;
+  document.getElementById('inputRole').value = admin.role;
+  document.getElementById('inputEmail').value = admin.email;
+  document.getElementById('modalAvText').textContent = initials(admin.name);
+  document.getElementById('profileModal').classList.add('open');
+  setTimeout(()=>document.getElementById('inputName').focus(), 220);
+
+  // live preview of initials while typing
+  document.getElementById('inputName').oninput = function(){
+    document.getElementById('modalAvText').textContent = initials(this.value) || '??';
+  };
+}
+
+function closeModal(){
+  document.getElementById('profileModal').classList.remove('open');
+}
+
+function saveProfile(){
+  const name = document.getElementById('inputName').value.trim();
+  const role = document.getElementById('inputRole').value.trim();
+  const email = document.getElementById('inputEmail').value.trim();
+
+  if(!name){ document.getElementById('inputName').focus(); return; }
+
+  admin.name = name;
+  admin.role = role || admin.role;
+  admin.email = email || admin.email;
+
+  applyAdmin();
+  closeModal();
+  showToast(`✅ Профиль обновлён — ${name}`);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// Close modal on Escape
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+// Apply initial admin data on load
+window.addEventListener('DOMContentLoaded', ()=>{
+  applyAdmin();
+  setTimeout(initDashCharts, 100);
+  if(window.innerWidth < 768) document.getElementById('menuBtn').style.display = 'flex';
+});
+
+window.addEventListener('resize',()=>{
+  const mb = document.getElementById('menuBtn');
+  if(window.innerWidth < 768){ mb.style.display='flex'; }
+  else { mb.style.display='none'; document.getElementById('sidebar').classList.remove('open'); }
+});
+</script>
+</body>
+</html>
